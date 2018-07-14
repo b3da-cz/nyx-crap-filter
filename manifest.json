@@ -1,0 +1,25 @@
+{
+  "name": "Nyx Crap Filter",
+  "description": "Hide all the crap you want on nyx.cz",
+  "version": "0.1.0",
+  "browser_action": {
+    "default_icon": "icon.png",
+    "default_popup": "popup.html",
+    "default_title": "Nyx Crap Filter"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://*.nyx.cz/*"],
+      "css": ["contentStyle.css"],
+      "js": ["contentScript.js"]
+    }
+  ],
+  "background": {
+    "scripts": ["background.js"]
+  },
+  "permissions": [
+    "tabs",
+    "https://*.nyx.cz/*"
+  ],
+  "manifest_version": 2
+}

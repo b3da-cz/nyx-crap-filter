@@ -1,0 +1,29 @@
+.ncf-filtered .wc {
+  height: 1rem;
+  font-size: 20%;
+  opacity: 0.1;
+  transition: all 200ms;
+}
+.ncf-filtered .wh {
+  opacity: 0.5;
+  transition: opacity 200ms;
+}
+.ncf-filtered .wi {
+  opacity: 0.1;
+  transition: opacity 200ms;
+}
+.ncf-filtered:hover .wc {
+  height: auto;
+  font-size: 100%;
+  opacity: 1;
+}
+.ncf-filtered:hover .wh {
+  opacity: 1;
+}
+.ncf-filtered:hover .wi {
+  opacity: 1;
+}
+
+.ncf-hidden {
+  display: none;
+}
