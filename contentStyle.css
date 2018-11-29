@@ -17,9 +17,7 @@
   font-size: 100%;
   opacity: 1;
 }
-.ncf-filtered:hover .wh {
-  opacity: 1;
-}
+.ncf-filtered:hover .wh,
 .ncf-filtered:hover .wi {
   opacity: 1;
 }

@@ -9,7 +9,7 @@ const setState = newState => {
   window.localStorage.setItem('net.b3da.ncf-state', JSON.stringify(state))
 }
 
-let inputUserId, inputPhrase, inputHide, resultEl
+let inputUserId, inputPhrase, inputHide
 
 const getActiveTab = () => {
   return new Promise(resolve => {
@@ -58,18 +58,38 @@ const listenForBtnUpdateOnClick = () => {
   })
 }
 
+const checkForContentScriptStateUpdate = () => {
+  return new Promise(resolve => {
+    getActiveTab()
+      .then(tab => {
+        if (tab.url.includes('nyx.cz')) {
+          chrome.tabs.sendMessage(tab.id, {
+            action: 'syncState',
+          }, response => {
+            if (response) {
+              setState(response)
+            }
+            resolve(response)
+          })
+        }
+      })
+      .catch(e => console.warn('error: ', e))
+  })
+}
+
 const initCrapFilter = () => {
-  inputUserId.value = state.userId
-  inputPhrase.value = state.phrase
-  inputHide.checked = !!state.hide
-  listenForBtnUpdateOnClick()
-  doFilter()
+  checkForContentScriptStateUpdate().then(() => {
+    inputUserId.value = state.userId
+    inputPhrase.value = state.phrase
+    inputHide.checked = !!state.hide
+    listenForBtnUpdateOnClick()
+    doFilter()
+  })
 }
 
 document.addEventListener('DOMContentLoaded', () => {
   inputUserId = document.getElementById('inputUserId')
   inputPhrase = document.getElementById('inputPhrase')
   inputHide = document.getElementById('inputHide')
-  resultEl = document.getElementById('resultEl')
   initCrapFilter();
 })
