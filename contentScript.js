@@ -110,4 +110,39 @@
   q = doNyxCrapFilter(state.userId, state.phrase)
   updateBadgeText()
   listenForOnPageFilterUpdate()
+
+  // DI fixer, have to be injected
+  setTimeout(() => {
+    const s = document.createElement('script')
+    s.innerHTML = `
+    const origXhrOpenProto = XMLHttpRequest.prototype.open
+    const interceptXhr = (urlPattern, onResolve) => {
+      XMLHttpRequest.prototype.open = function() {
+        const uri = arguments[1]
+        uri.match(urlPattern) && this.addEventListener('readystatechange', function(event) {
+          if (this.readyState === 4) {
+            const response = onResolve(uri, event.target.responseText)
+            Object.defineProperty(this, 'response',     {writable: true})
+            Object.defineProperty(this, 'responseText', {writable: true})
+            this.response = this.responseText = response
+          }
+        })
+        return origXhrOpenProto.apply(this, arguments)
+      }
+    }
+    interceptXhr(/ol_reply.php/, (uri, response) => {
+      if (response.includes('odkazovaný příspěvek již není v databázi')) {
+        fetch(uri, {credentials: 'omit'})
+          .then(res => res.text())
+          .then(msg => {
+            const responseEl = document.getElementById('rs')
+            if (responseEl) {responseEl.innerHTML = msg}
+          })
+        return 'DI? try again as anon..'
+      }
+      return response
+    })
+    `;
+    (document.head || document.documentElement).appendChild(s)
+  })
 }())
