@@ -16,6 +16,4 @@ filtr nezadoucich hovadin na nyx.cz + fixer diskuzi rozbitych DI
 
 * vice filtru
 * podle klubu
-* on page eventy [x]
-* uhezknout
 * doladit DI fixer
