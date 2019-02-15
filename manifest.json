@@ -1,7 +1,7 @@
 {
   "name": "Nyx Crap Filter",
   "description": "Hide all the crap you want on nyx.cz",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "browser_action": {
     "default_icon": "icon.png",
     "default_popup": "popup.html",

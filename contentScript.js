@@ -37,8 +37,9 @@
     }
     let i = 0;
     [].forEach.call(document.getElementsByClassName('w'), node => {
+      const nickEl = node.querySelector('.nick')
       if (
-        (!userId || node.querySelector('.nick').innerText.toLowerCase().includes(userId))
+        (!userId || (nickEl && nickEl.innerText.toLowerCase().includes(userId)))
         && node.querySelector('.wci').innerText.toLowerCase()
           .normalize('NFD').replace(/[\u0300-\u036f]/g, '').includes(phrase)
       ) {
@@ -84,15 +85,124 @@
     })
   }
 
+  const injectDiRepliesFixer = () => {
+    if (!document.getElementById('diFixBase')) {
+      const s = document.createElement('script')
+      s.id = 'diFixBase'
+      s.innerHTML = `
+        const origXhrOpenProto = XMLHttpRequest.prototype.open
+        window.interceptXhr = (urlPattern, onResolve) => {
+          XMLHttpRequest.prototype.open = function() {
+            const uri = arguments[1]
+            uri.match(urlPattern) && this.addEventListener('readystatechange', function(event) {
+              if (this.readyState === 4) {
+                const response = onResolve(uri, event.target.responseText)
+                Object.defineProperty(this, 'response', {writable: true})
+                Object.defineProperty(this, 'responseText', {writable: true})
+                this.response = this.responseText = response
+              }
+            })
+            return origXhrOpenProto.apply(this, arguments)
+          }
+        }
+      `;
+      (document.head || document.documentElement).appendChild(s)
+    }
+    const os = document.getElementById('diFix')
+    if (os) {
+      os.remove()
+    }
+    const s = document.createElement('script')
+    s.id = 'diFix'
+    if (state.fixDiReplies) {
+      s.innerHTML = `
+        interceptXhr(/ol_reply.php/, (uri, response) => {
+          if (response.includes('odkazovaný příspěvek již není v databázi')) {
+            fetch(uri, {credentials: 'omit'})
+              .then(res => res.text())
+              .then(msg => {
+                const responseEl = document.getElementById('rs')
+                if (responseEl) {responseEl.innerHTML = msg}
+              })
+            return '<div>DI? try again as anon..</div>'
+          }
+          return response
+        })
+      `
+      // todo: find way to fetch writeups
+    } else {
+      s.innerHTML = `
+        interceptXhr(/ol_reply.php/, (uri, response) => {
+          return response
+        })
+      `
+    }
+    (document.head || document.documentElement).appendChild(s)
+  }
+
+  const fixDiByRefetchingList = () => {
+    // todo refactor
+    if (state.fixDiOther && !!document.getElementById('topic_id')) {
+      const topicId = document.getElementById('topic_id').value
+      const existingRows = document.getElementsByClassName('w')
+      const minId = existingRows[existingRows.length - 1].id.substr(3)
+      const maxId = existingRows[0].id.substr(3)
+      const currentPostCount = existingRows.length
+      const body = new FormData()
+      body.append('count', `${currentPostCount * 2}`)
+      body.append('min_id', minId)
+      body.append('max_id', maxId)
+      // body.append('nav', '>') // dafuq todo pagination
+      fetch(`https://www.nyx.cz/index.php?l=topic;id=${topicId}`, {
+        method: 'post',
+        credentials: 'omit',
+        body: body
+      }).then(res => res.text())
+        .then(htmlStr => {
+          const helperEl = document.createElement('div')
+          helperEl.innerHTML = htmlStr
+          const rows = [];
+          [].forEach.call(helperEl.getElementsByClassName('w'), row => {
+            if (!document.getElementById(row.id)) {
+              rows.push(row)
+            }
+          })
+          const updateSchema = []
+          let lastRowId = maxId;
+          [].forEach.call(existingRows, existingRow => {
+            const rowsBefore = rows
+              .filter(r => (Number(r.id.substr(3)) > Number(existingRow.id.substr(3)) && existingRow.id.substr(3) === lastRowId)
+                || (Number(r.id.substr(3)) > Number(existingRow.id.substr(3)) && Number(r.id.substr(3)) < Number(lastRowId))
+              )
+            updateSchema.push({existingRow, rowsBefore})
+            lastRowId = existingRow.id.substr(3)
+          })
+          updateSchema.forEach(row => {
+            row.rowsBefore.forEach(r => {
+              row.existingRow.parentElement.insertBefore(r, row.existingRow)
+            })
+          })
+        })
+    }
+  }
+
   chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     switch (request.action) {
       case 'doFilter':
+        const oldFixDiOther = state.fixDiOther
         setState({
           userId: request.userId,
           phrase: request.phrase,
           hide: request.hide,
+          fixDiReplies: request.fixDiReplies,
+          fixDiOther: request.fixDiOther,
         })
         q = doNyxCrapFilter(request.userId, request.phrase)
+        injectDiRepliesFixer()
+        if (oldFixDiOther && !state.fixDiOther) {
+          window.location.reload()
+        }
+        fixDiByRefetchingList()
         sendResponse({
           action: 'filterResult',
           quantity: q,
@@ -110,39 +220,6 @@
   q = doNyxCrapFilter(state.userId, state.phrase)
   updateBadgeText()
   listenForOnPageFilterUpdate()
-
-  // DI fixer, have to be injected
-  setTimeout(() => {
-    const s = document.createElement('script')
-    s.innerHTML = `
-    const origXhrOpenProto = XMLHttpRequest.prototype.open
-    const interceptXhr = (urlPattern, onResolve) => {
-      XMLHttpRequest.prototype.open = function() {
-        const uri = arguments[1]
-        uri.match(urlPattern) && this.addEventListener('readystatechange', function(event) {
-          if (this.readyState === 4) {
-            const response = onResolve(uri, event.target.responseText)
-            Object.defineProperty(this, 'response',     {writable: true})
-            Object.defineProperty(this, 'responseText', {writable: true})
-            this.response = this.responseText = response
-          }
-        })
-        return origXhrOpenProto.apply(this, arguments)
-      }
-    }
-    interceptXhr(/ol_reply.php/, (uri, response) => {
-      if (response.includes('odkazovaný příspěvek již není v databázi')) {
-        fetch(uri, {credentials: 'omit'})
-          .then(res => res.text())
-          .then(msg => {
-            const responseEl = document.getElementById('rs')
-            if (responseEl) {responseEl.innerHTML = msg}
-          })
-        return 'DI? try again as anon..'
-      }
-      return response
-    })
-    `;
-    (document.head || document.documentElement).appendChild(s)
-  })
+  injectDiRepliesFixer()
+  fixDiByRefetchingList()
 }())

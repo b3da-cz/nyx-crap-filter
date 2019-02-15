@@ -9,7 +9,7 @@ const setState = newState => {
   window.localStorage.setItem('net.b3da.ncf-state', JSON.stringify(state))
 }
 
-let inputUserId, inputPhrase, inputHide
+let inputUserId, inputPhrase, inputHide, inputFixDiReplies, inputFixDiOther
 
 const getActiveTab = () => {
   return new Promise(resolve => {
@@ -31,6 +31,8 @@ const doFilter = () => {
           userId: state.userId ? state.userId.toLowerCase() : '',
           phrase: state.phrase ? state.phrase.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase() : '',
           hide: state.hide,
+          fixDiReplies: state.fixDiReplies,
+          fixDiOther: state.fixDiOther,
         }, response => {
           if (response && response.action === 'filterResult') {
             chrome.extension.sendMessage({
@@ -53,6 +55,8 @@ const listenForBtnUpdateOnClick = () => {
       userId: inputUserId.value,
       phrase: inputPhrase.value,
       hide: inputHide.checked,
+      fixDiReplies: inputFixDiReplies.checked,
+      fixDiOther: inputFixDiOther.checked,
     })
     doFilter()
   })
@@ -82,6 +86,8 @@ const initCrapFilter = () => {
     inputUserId.value = state.userId
     inputPhrase.value = state.phrase
     inputHide.checked = !!state.hide
+    inputFixDiReplies.checked = !!state.fixDiReplies
+    inputFixDiOther.checked = !!state.fixDiOther
     listenForBtnUpdateOnClick()
     doFilter()
   })
@@ -91,5 +97,7 @@ document.addEventListener('DOMContentLoaded', () => {
   inputUserId = document.getElementById('inputUserId')
   inputPhrase = document.getElementById('inputPhrase')
   inputHide = document.getElementById('inputHide')
+  inputFixDiReplies = document.getElementById('inputFixDiReplies')
+  inputFixDiOther = document.getElementById('inputFixDiOther')
   initCrapFilter();
 })
