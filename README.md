@@ -2,6 +2,11 @@
 
 filtr nezadoucich hovadin na nyx.cz + fixer diskuzi rozbitych DI
 
+[Chrome web store link](https://chrome.google.com/webstore/detail/nyx-crap-filter/hbgncjahdefdfbdjfjmfedcklglhjfcf)
+
+[demo video:](http://www.youtube.com/watch?v=RXMZmEBiYh4)
+
+[![demo](http://img.youtube.com/vi/RXMZmEBiYh4/0.jpg)](http://www.youtube.com/watch?v=RXMZmEBiYh4 "demo")
 
 ### pouziti
 
