@@ -186,6 +186,21 @@
     }
   }
 
+  const updateSideMenu = () => {
+    const liHistoryEl = document.querySelector('li.i9.history')
+    if (state.menuHistory && !liHistoryEl) {
+      const sideMenuEl = document.querySelector('ul.m.l1')
+      if (sideMenuEl) {
+        const li = document.createElement('li')
+        li.className = 'i9 history'
+        li.innerHTML = `<a href="?l=book;l2=2"><span class="icon-entypo icon-bookmarks"></span><span class="text">historie</span></a></li>`
+        sideMenuEl.insertBefore(li, sideMenuEl.querySelector('li.last'))
+      }
+    } else if (!state.menuHistory && !!liHistoryEl) {
+      liHistoryEl.remove()
+    }
+  }
+
   chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     switch (request.action) {
       case 'doFilter':
@@ -196,7 +211,9 @@
           hide: request.hide,
           fixDiReplies: request.fixDiReplies,
           fixDiOther: request.fixDiOther,
+          menuHistory: request.menuHistory,
         })
+        updateSideMenu()
         q = doNyxCrapFilter(request.userId, request.phrase)
         injectDiRepliesFixer()
         if (oldFixDiOther && !state.fixDiOther) {
@@ -222,4 +239,5 @@
   listenForOnPageFilterUpdate()
   injectDiRepliesFixer()
   fixDiByRefetchingList()
+  updateSideMenu()
 }())

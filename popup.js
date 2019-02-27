@@ -9,7 +9,7 @@ const setState = newState => {
   window.localStorage.setItem('net.b3da.ncf-state', JSON.stringify(state))
 }
 
-let inputUserId, inputPhrase, inputHide, inputFixDiReplies, inputFixDiOther
+let inputUserId, inputPhrase, inputHide, inputFixDiReplies, inputFixDiOther, inputMenuHistory
 
 const getActiveTab = () => {
   return new Promise(resolve => {
@@ -33,6 +33,7 @@ const doFilter = () => {
           hide: state.hide,
           fixDiReplies: state.fixDiReplies,
           fixDiOther: state.fixDiOther,
+          menuHistory: state.menuHistory,
         }, response => {
           if (response && response.action === 'filterResult') {
             chrome.extension.sendMessage({
@@ -57,6 +58,7 @@ const listenForBtnUpdateOnClick = () => {
       hide: inputHide.checked,
       fixDiReplies: inputFixDiReplies.checked,
       fixDiOther: inputFixDiOther.checked,
+      menuHistory: inputMenuHistory.checked,
     })
     doFilter()
   })
@@ -88,6 +90,7 @@ const initCrapFilter = () => {
     inputHide.checked = !!state.hide
     inputFixDiReplies.checked = !!state.fixDiReplies
     inputFixDiOther.checked = !!state.fixDiOther
+    inputMenuHistory.checked = !!state.menuHistory
     listenForBtnUpdateOnClick()
     doFilter()
   })
@@ -99,5 +102,6 @@ document.addEventListener('DOMContentLoaded', () => {
   inputHide = document.getElementById('inputHide')
   inputFixDiReplies = document.getElementById('inputFixDiReplies')
   inputFixDiOther = document.getElementById('inputFixDiOther')
+  inputMenuHistory = document.getElementById('inputMenuHistory')
   initCrapFilter();
 })
