@@ -117,7 +117,7 @@
     if (state.fixDiReplies) {
       s.innerHTML = `
         interceptXhr(/ol_reply.php/, (uri, response) => {
-          if (response.includes('odkazovaný příspěvek již není v databázi')) {
+          if (response.includes('odkazovaný příspěvek již není v databázi') || response.includes('linked writeup wasn't found in our database')) {
             fetch(uri, {credentials: 'omit'})
               .then(res => res.text())
               .then(msg => {
