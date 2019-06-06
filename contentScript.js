@@ -117,7 +117,7 @@
     if (state.fixDiReplies) {
       s.innerHTML = `
         interceptXhr(/ol_reply.php/, (uri, response) => {
-          if (response.includes('odkazovaný příspěvek již není v databázi') || response.includes('linked writeup wasn't found in our database')) {
+          if (response.includes('odkazovaný příspěvek již není v databázi') || response.includes("linked writeup wasn't found in our database")) {
             fetch(uri, {credentials: 'omit'})
               .then(res => res.text())
               .then(msg => {
@@ -201,6 +201,26 @@
     }
   }
 
+  const translateImageUrlsToTags = () => {
+    const msgBox = document.getElementById('message_box')
+    if (!!msgBox) {
+      msgBox.addEventListener('keyup', () => {
+        const regex = /(http(s?):)([/|.|\w|\s|-])*\.(?:jpg|jpeg|gif|png) /g;
+        const str = msgBox.value
+        const matches = str.match(regex)
+        let result = ''
+        if (matches && matches.length > 0) {
+          matches.forEach(m => {
+            result = str.replace(m, ` <img src="${m.trim()}" width="50%">`)
+          })
+        } else {
+          result = str
+        }
+        msgBox.value = result
+      })
+    }
+  }
+
   chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     switch (request.action) {
       case 'doFilter':
@@ -240,4 +260,5 @@
   injectDiRepliesFixer()
   fixDiByRefetchingList()
   updateSideMenu()
+  translateImageUrlsToTags()
 }())
